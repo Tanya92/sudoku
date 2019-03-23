@@ -1,69 +1,78 @@
-function filterPossibleNumbers(row,possibleValues) {
-  let result = possibleValues.slice();
-  for (let i = 0; i < row.length; i++) {
-    if (possibleValues.includes(row[i])) {
-      result = result.filter(number => number != row[i]);
+function checkSquare(matrix,i,j,value) {
+  const row = i + 3;
+  const col = j + 3;
+  for (let k = i;k < row;k++) {
+    for (let n = j; n < col;n++) {
+      if (matrix[k][n] == value) {
+        return false;
+      } 
     }
   }
-  return result;
+  return true;
 }
 
-function cutSquare(matrix,i,j) {
-  let result = [];
-  for (;i < 3;i++) {
-    for (; j < 3;j++) {
-      result.push(matrix[i][j]);
+function checkCol(matrix, j,value) {
+  for (let i = 0; i < matrix.length; i++) {
+    if (matrix[i][j] == value) {
+      return false;
     }
   }
-  return result;
+  return true;
 }
 
-function returnCol(matrix, j) {
+function checkRow(matrix, i, value) {
+  for (let j = 0; j < matrix[i].length; j++) {
+    if (matrix[i][j] == value) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function checkValue(matrix,row, col,value) {
+  return checkCol(matrix, col, value) &&
+        checkRow(matrix, row, value) &&
+        checkSquare(
+          matrix, 
+          Math.floor(row / 3) * 3,
+          Math.floor(col / 3) * 3 ,
+          value)
+        ;
+}
+
+function returnZeroCells(matrix) {
   let result = [];
   for (let i = 0; i < matrix.length; i++) {
-    result.push(matrix[i][j]);
+    for (let j = 0; j < matrix[i].length; j++) {
+      if (matrix[i][j] == 0) {
+        result.push([i,j]);
+      }
+    }
   }
   return result;
-}
-
-function possibleValuesForCell(matrix,row, col,possibleValues) {
-  let restRow = matrix[row].slice(col+1);
-  possibleValues = filterPossibleNumbers(restRow,possibleValues);
-  let fullCol = returnCol(matrix, col);
-  possibleValues = filterPossibleNumbers(fullCol, possibleValues);
-  let squareArray = cutSquare(
-    matrix,
-    Math.floor(row / 3),
-    Math.floor(col / 3)
-  );
-  possibleValues = filterPossibleNumbers(squareArray, possibleValues);
-  return possibleValues;
 }
 module.exports = function solveSudoku(matrix) {
   // your solution
-  const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-  for (let row = 0; row < matrix.length; row++) {
-    let possibleValues = numbers.slice();
-    for (let col = 0; col < matrix[row].length; col++) {
-      if (matrix[row][col] == 0) {
-        possibleValues = possibleValuesForCell(matrix, row, col, possibleValues);
-        if (possibleValues.length == 0) {
-          return false;
-        }
-        let solved = false;
-        let index = 0;
-        do {
-          matrix[row][col] = possibleValues[index];
-          solved = solveSudoku(matrix);
-          index++;
-        } while (!solved)
-        
+  let zeroCells = returnZeroCells(matrix);
+  const maxValue = 9;
+  for (let k = 0; k < zeroCells.length;) {
+    const [i, j] = zeroCells[k];
+    let value = matrix[i][j] + 1;
+    let solved = false;
+    while (!solved && value <= maxValue) {
+      if (checkValue(matrix, i, j, value)) {
+        solved = true;
+        k++;
+        matrix[i][j] = value;
       } else {
-        possibleValues = possibleValues.filter(number => number != matrix[row][col]);
+        value++;
       }
+    }
+    if (!solved) {
+      matrix[i][j] = 0;
+      k--;
     }
   }
   return matrix;
 }
-
+           
